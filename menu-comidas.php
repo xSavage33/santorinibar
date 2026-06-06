@@ -149,13 +149,10 @@ foreach ($productos as $producto) {
                         <?php endif; ?>
 
                         <div class="product-image">
-                            <?php if (!empty($producto['imagen'])): ?>
-                            <img src="uploads/productos/<?= htmlspecialchars($producto['imagen']) ?>"
+                            <img src="<?= !empty($producto['imagen']) ? 'uploads/productos/' . htmlspecialchars($producto['imagen']) : NO_IMAGE_PLACEHOLDER ?>"
                                  alt="<?= htmlspecialchars($producto['nombre']) ?>"
-                                 loading="lazy">
-                            <?php else: ?>
-                            <img src="<?= NO_IMAGE_PLACEHOLDER ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>" loading="lazy">
-                            <?php endif; ?>
+                                 loading="lazy"
+                                 onerror="this.onerror=null; this.src='<?= NO_IMAGE_PLACEHOLDER ?>'">
                             <div class="image-overlay"></div>
                         </div>
 

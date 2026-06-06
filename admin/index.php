@@ -106,12 +106,9 @@ $ultimosProductos = $db->query("
                                 <?php foreach ($ultimosProductos as $prod): ?>
                                 <tr>
                                     <td>
-                                        <?php if (!empty($prod['imagen'])): ?>
-                                        <img src="../<?= UPLOAD_URL . htmlspecialchars($prod['imagen']) ?>" 
-                                             alt="" class="table-image">
-                                        <?php else: ?>
-                                        <img src="<?= NO_IMAGE_PLACEHOLDER ?>" alt="Sin imagen" class="table-image">
-                                        <?php endif; ?>
+                                        <img src="<?= !empty($prod['imagen']) ? '../' . UPLOAD_URL . htmlspecialchars($prod['imagen']) : NO_IMAGE_PLACEHOLDER ?>"
+                                             alt="" class="table-image"
+                                             onerror="this.onerror=null; this.src='<?= NO_IMAGE_PLACEHOLDER ?>'">
                                     </td>
                                     <td>
                                         <strong><?= htmlspecialchars($prod['nombre']) ?></strong>

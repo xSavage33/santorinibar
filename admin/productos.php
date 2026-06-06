@@ -196,6 +196,12 @@ $productos = $db->query("
                         <p class="page-subtitle">Arrastra las filas para reorganizar el orden</p>
                     </div>
                     <div class="page-actions">
+                        <select id="filterCategoria" class="form-select" onchange="filterTable()" style="width: 180px;">
+                            <option value="">Todas las categorias</option>
+                            <?php foreach ($categorias as $cat): ?>
+                            <option value="<?= htmlspecialchars($cat['nombre']) ?>"><?= htmlspecialchars($cat['nombre']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
                         <div class="search-input-wrapper">
                             <i class="fas fa-search search-input-icon"></i>
                             <input type="text" id="searchInput" class="search-input" placeholder="Buscar producto..." onkeyup="filterTable()">
@@ -249,12 +255,9 @@ $productos = $db->query("
                                         </span>
                                     </td>
                                     <td>
-                                        <?php if (!empty($prod['imagen'])): ?>
-                                        <img src="../<?= UPLOAD_URL . htmlspecialchars($prod['imagen']) ?>"
-                                             alt="" class="table-image">
-                                        <?php else: ?>
-                                        <img src="<?= NO_IMAGE_PLACEHOLDER ?>" alt="Sin imagen" class="table-image">
-                                        <?php endif; ?>
+                                        <img src="<?= !empty($prod['imagen']) ? '../' . UPLOAD_URL . htmlspecialchars($prod['imagen']) : NO_IMAGE_PLACEHOLDER ?>"
+                                             alt="" class="table-image"
+                                             onerror="this.onerror=null; this.src='<?= NO_IMAGE_PLACEHOLDER ?>'">
                                     </td>
                                     <td>
                                         <strong><?= htmlspecialchars($prod['nombre']) ?></strong>
@@ -540,12 +543,19 @@ $productos = $db->query("
     // Filtrar tabla de productos
     function filterTable() {
         const searchValue = document.getElementById('searchInput').value.toLowerCase();
+        const categoryFilter = document.getElementById('filterCategoria').value.toLowerCase();
         const rows = document.querySelectorAll('#sortable-productos tr[data-id]');
         let visibleCount = 0;
 
         rows.forEach(row => {
             const text = row.textContent.toLowerCase();
-            if (text.includes(searchValue)) {
+            const categoryCell = row.querySelector('td:nth-child(5)'); // Columna de categoría
+            const categoryText = categoryCell ? categoryCell.textContent.toLowerCase() : '';
+
+            const matchesSearch = searchValue === '' || text.includes(searchValue);
+            const matchesCategory = categoryFilter === '' || categoryText.includes(categoryFilter);
+
+            if (matchesSearch && matchesCategory) {
                 row.style.display = '';
                 visibleCount++;
             } else {
@@ -555,11 +565,11 @@ $productos = $db->query("
 
         // Mostrar mensaje si no hay resultados
         let noResults = document.getElementById('noResults');
-        if (visibleCount === 0 && searchValue !== '') {
+        if (visibleCount === 0) {
             if (!noResults) {
                 noResults = document.createElement('tr');
                 noResults.id = 'noResults';
-                noResults.innerHTML = '<td colspan="7" class="text-center text-muted" style="padding: 30px;">No se encontraron productos con "' + searchValue + '"</td>';
+                noResults.innerHTML = '<td colspan="7" class="text-center text-muted" style="padding: 30px;">No se encontraron productos</td>';
                 document.getElementById('sortable-productos').appendChild(noResults);
             }
         } else if (noResults) {
