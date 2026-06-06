@@ -1,0 +1,32 @@
+# Variables de entorno (NUNCA subir)
+.env
+
+# Claude
+.claude/
+
+# Uploads de usuarios
+uploads/productos/*
+!uploads/productos/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# Cache
+cache/
+tmp/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backups
+*.bak
+*.backup
+*.sql.gz

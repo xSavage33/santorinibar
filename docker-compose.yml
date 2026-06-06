@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "80:80"
+    environment:
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME:-santorini}
+      - DB_USER=${DB_USER:-santorini_user}
+      - DB_PASS=${DB_PASS:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - uploads:/var/www/html/uploads
+    restart: unless-stopped
+    networks:
+      - santorini-network
+
+  db:
+    image: mariadb:10.11
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-}
+      - MYSQL_DATABASE=${DB_NAME:-santorini}
+      - MYSQL_USER=${DB_USER:-santorini_user}
+      - MYSQL_PASSWORD=${DB_PASS:-}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./santorini.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - santorini-network
+
+volumes:
+  db_data:
+  uploads:
+
+networks:
+  santorini-network:
+    driver: bridge

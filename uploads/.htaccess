@@ -1,0 +1,19 @@
+# Prevenir ejecucion de PHP en carpeta uploads
+<FilesMatch "\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Prevenir ejecucion de scripts
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+
+# Solo permitir imagenes
+<FilesMatch "\.(?i:jpg|jpeg|png|gif|webp|ico)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# Deshabilitar listado
+Options -Indexes
