@@ -137,9 +137,7 @@ foreach ($productos as $producto) {
                                  alt="<?= htmlspecialchars($producto['nombre']) ?>"
                                  loading="lazy">
                             <?php else: ?>
-                            <div class="image-placeholder">
-                                <i class="fas fa-wine-bottle"></i>
-                            </div>
+                            <img src="assets/img/no-image.svg" alt="<?= htmlspecialchars($producto['nombre']) ?>" loading="lazy">
                             <?php endif; ?>
                             <div class="image-overlay"></div>
                         </div>

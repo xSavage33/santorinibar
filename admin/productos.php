@@ -249,9 +249,7 @@ $productos = $db->query("
                                         <img src="../<?= UPLOAD_URL . htmlspecialchars($prod['imagen']) ?>"
                                              alt="" class="table-image">
                                         <?php else: ?>
-                                        <div class="table-image" style="background: var(--slate-100); display: flex; align-items: center; justify-content: center;">
-                                            <i class="fas fa-image" style="color: var(--slate-300);"></i>
-                                        </div>
+                                        <img src="../assets/img/no-image.svg" alt="Sin imagen" class="table-image">
                                         <?php endif; ?>
                                     </td>
                                     <td>
