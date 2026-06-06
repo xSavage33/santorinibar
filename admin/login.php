@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
 
         <p class="text-center text-muted mt-20" style="font-size: 0.8rem;">
-            <a href="../" style="color: var(--color-gold); text-decoration: none;">
+            <a href="../" style="color: var(--primary-500); text-decoration: none;">
                 <i class="fas fa-arrow-left"></i> Volver al menu
             </a>
         </p>

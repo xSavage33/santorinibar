@@ -150,20 +150,23 @@ $productos = $db->query("
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <?php include 'includes/sidebar.php'; ?>
-
     <div class="admin-layout">
+        <?php include 'includes/sidebar.php'; ?>
+
         <main class="admin-main">
-            <div class="admin-header">
-                <div>
-                    <h1 class="page-title">Productos</h1>
-                    <p class="page-subtitle">Gestiona los productos del menu</p>
+            <div class="admin-content">
+                <div class="admin-header">
+                    <div class="page-title-group">
+                        <h1 class="page-title">Productos</h1>
+                        <p class="page-subtitle">Gestiona los productos del menu</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="btn btn-primary" onclick="openModal('crear')" <?= empty($subcategorias) ? 'disabled' : '' ?>>
+                            <i class="fas fa-plus"></i>
+                            Nuevo Producto
+                        </button>
+                    </div>
                 </div>
-                <button class="btn btn-primary" onclick="openModal('crear')" <?= empty($subcategorias) ? 'disabled' : '' ?>>
-                    <i class="fas fa-plus"></i>
-                    Nuevo Producto
-                </button>
-            </div>
 
             <?php if (empty($subcategorias)): ?>
             <div class="alert alert-warning">
@@ -205,8 +208,8 @@ $productos = $db->query("
                                         <img src="../<?= UPLOAD_URL . htmlspecialchars($prod['imagen']) ?>"
                                              alt="" class="table-image">
                                         <?php else: ?>
-                                        <div class="table-image" style="background: var(--color-dark-light); display: flex; align-items: center; justify-content: center;">
-                                            <i class="fas fa-image" style="opacity: 0.3;"></i>
+                                        <div class="table-image" style="background: var(--slate-100); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-image" style="color: var(--slate-300);"></i>
                                         </div>
                                         <?php endif; ?>
                                     </td>
@@ -220,9 +223,9 @@ $productos = $db->query("
                                     </td>
                                     <td>
                                         <?= htmlspecialchars($prod['categoria_nombre']) ?><br>
-                                        <small class="text-gold"><?= htmlspecialchars($prod['subcategoria_nombre']) ?></small>
+                                        <small class="text-primary"><?= htmlspecialchars($prod['subcategoria_nombre']) ?></small>
                                     </td>
-                                    <td class="text-gold" style="font-weight: 600;"><?= formatPrice($prod['precio']) ?></td>
+                                    <td class="text-success font-semibold"><?= formatPrice($prod['precio']) ?></td>
                                     <td>
                                         <?php if ($prod['activo']): ?>
                                         <span class="badge badge-success">Activo</span>
@@ -251,6 +254,7 @@ $productos = $db->query("
                     </div>
                     <?php endif; ?>
                 </div>
+            </div>
             </div>
         </main>
     </div>

@@ -31,40 +31,42 @@ $ultimosProductos = $db->query("
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <?php include 'includes/sidebar.php'; ?>
-    
     <div class="admin-layout">
-        <!-- Main Content -->
+        <?php include 'includes/sidebar.php'; ?>
+
         <main class="admin-main">
-            <div class="admin-header">
-                <div>
-                    <h1 class="page-title">Dashboard</h1>
-                    <p class="page-subtitle">Bienvenido, <?= htmlspecialchars($_SESSION['admin_nombre']) ?></p>
+            <div class="admin-content">
+                <div class="admin-header">
+                    <div class="page-title-group">
+                        <h1 class="page-title">Dashboard</h1>
+                        <p class="page-subtitle">Bienvenido, <?= htmlspecialchars($_SESSION['admin_nombre']) ?></p>
+                    </div>
+                    <div class="page-actions">
+                        <a href="../" target="_blank" class="btn btn-secondary">
+                            <i class="fas fa-external-link-alt"></i>
+                            Ver Menu
+                        </a>
+                    </div>
                 </div>
-                <a href="../" target="_blank" class="btn btn-secondary">
-                    <i class="fas fa-external-link-alt"></i>
-                    Ver Menu
-                </a>
-            </div>
 
             <!-- Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon gold">
+                    <div class="stat-icon blue">
                         <i class="fas fa-folder"></i>
                     </div>
                     <div class="stat-value"><?= $totalCategorias ?></div>
                     <div class="stat-label">Categorias</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon green">
+                    <div class="stat-icon cyan">
                         <i class="fas fa-layer-group"></i>
                     </div>
                     <div class="stat-value"><?= $totalSubcategorias ?></div>
                     <div class="stat-label">Subcategorias</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon gold">
+                    <div class="stat-icon warning">
                         <i class="fas fa-wine-bottle"></i>
                     </div>
                     <div class="stat-value"><?= $totalProductos ?></div>
@@ -108,8 +110,8 @@ $ultimosProductos = $db->query("
                                         <img src="../<?= UPLOAD_URL . htmlspecialchars($prod['imagen']) ?>" 
                                              alt="" class="table-image">
                                         <?php else: ?>
-                                        <div class="table-image" style="background: var(--color-dark-light); display: flex; align-items: center; justify-content: center;">
-                                            <i class="fas fa-image" style="opacity: 0.3;"></i>
+                                        <div class="table-image" style="background: var(--slate-100); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-image" style="color: var(--slate-300);"></i>
                                         </div>
                                         <?php endif; ?>
                                     </td>
@@ -120,7 +122,7 @@ $ultimosProductos = $db->query("
                                         <?= htmlspecialchars($prod['categoria_nombre']) ?> / 
                                         <?= htmlspecialchars($prod['subcategoria_nombre']) ?>
                                     </td>
-                                    <td class="text-gold"><?= formatPrice($prod['precio']) ?></td>
+                                    <td class="text-success font-semibold"><?= formatPrice($prod['precio']) ?></td>
                                     <td>
                                         <?php if ($prod['activo']): ?>
                                         <span class="badge badge-success">Activo</span>
@@ -135,6 +137,7 @@ $ultimosProductos = $db->query("
                     </div>
                     <?php endif; ?>
                 </div>
+            </div>
             </div>
         </main>
     </div>

@@ -93,20 +93,23 @@ $subcategorias = $db->query("
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <?php include 'includes/sidebar.php'; ?>
-
     <div class="admin-layout">
+        <?php include 'includes/sidebar.php'; ?>
+
         <main class="admin-main">
-            <div class="admin-header">
-                <div>
-                    <h1 class="page-title">Subcategorias</h1>
-                    <p class="page-subtitle">Gestiona las subcategorias del menu</p>
+            <div class="admin-content">
+                <div class="admin-header">
+                    <div class="page-title-group">
+                        <h1 class="page-title">Subcategorias</h1>
+                        <p class="page-subtitle">Gestiona las subcategorias del menu</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="btn btn-primary" onclick="openModal('crear')" <?= empty($categorias) ? 'disabled' : '' ?>>
+                            <i class="fas fa-plus"></i>
+                            Nueva Subcategoria
+                        </button>
+                    </div>
                 </div>
-                <button class="btn btn-primary" onclick="openModal('crear')" <?= empty($categorias) ? 'disabled' : '' ?>>
-                    <i class="fas fa-plus"></i>
-                    Nueva Subcategoria
-                </button>
-            </div>
 
             <?php if (empty($categorias)): ?>
             <div class="alert alert-warning">
@@ -178,6 +181,7 @@ $subcategorias = $db->query("
                     <?php endif; ?>
                 </div>
             </div>
+            </div>
         </main>
     </div>
 
@@ -248,7 +252,7 @@ $subcategorias = $db->query("
                     <input type="hidden" name="id" id="eliminarId" value="">
                     <p>¿Estas seguro de eliminar la subcategoria <strong id="eliminarNombre"></strong>?</p>
                     <p class="text-muted" style="font-size: 0.85rem;">
-                        <i class="fas fa-exclamation-triangle text-gold"></i>
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
                         Esta accion eliminara tambien todos los productos asociados.
                     </p>
                 </div>
