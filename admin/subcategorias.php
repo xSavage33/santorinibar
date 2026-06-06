@@ -330,7 +330,8 @@ $subcategorias = $db->query("
             },
             body: JSON.stringify({
                 tabla: 'subcategorias',
-                items: items
+                items: items,
+                csrf_token: csrfToken
             })
         })
         .then(response => response.json())

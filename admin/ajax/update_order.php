@@ -5,6 +5,8 @@
 require_once '../../includes/config.php';
 requireAuth();
 
+header('Content-Type: application/json');
+
 // Solo aceptar POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -12,18 +14,33 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Verificar CSRF
-$headers = getallheaders();
-$csrfToken = $headers['X-CSRF-Token'] ?? $_POST['csrf_token'] ?? '';
+// Obtener datos del body
+$input = json_decode(file_get_contents('php://input'), true);
 
-if (!validateCsrfTokenValue($csrfToken)) {
+// Verificar CSRF - buscar en headers y en el body JSON
+$csrfToken = '';
+
+// Intentar obtener de headers (varios formatos)
+if (function_exists('getallheaders')) {
+    $headers = getallheaders();
+    $csrfToken = $headers['X-CSRF-Token'] ?? $headers['X-Csrf-Token'] ?? $headers['x-csrf-token'] ?? '';
+}
+
+// Si no está en headers, buscar en el body JSON
+if (empty($csrfToken) && isset($input['csrf_token'])) {
+    $csrfToken = $input['csrf_token'];
+}
+
+// Fallback: buscar en $_SERVER
+if (empty($csrfToken)) {
+    $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+}
+
+if (empty($csrfToken) || !validateCsrfTokenValue($csrfToken)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Token CSRF invalido']);
     exit;
 }
-
-// Obtener datos
-$input = json_decode(file_get_contents('php://input'), true);
 $tabla = $input['tabla'] ?? '';
 $items = $input['items'] ?? [];
 

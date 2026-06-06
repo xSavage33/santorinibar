@@ -437,7 +437,8 @@ $productos = $db->query("
             },
             body: JSON.stringify({
                 tabla: 'productos',
-                items: items
+                items: items,
+                csrf_token: csrfToken
             })
         })
         .then(response => response.json())

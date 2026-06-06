@@ -320,7 +320,8 @@ $categorias = $db->query("SELECT c.*,
             },
             body: JSON.stringify({
                 tabla: 'categorias',
-                items: items
+                items: items,
+                csrf_token: csrfToken
             })
         })
         .then(response => response.json())
