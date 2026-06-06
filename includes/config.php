@@ -116,6 +116,14 @@ function validateCsrfToken() {
     }
 }
 
+function validateCsrfTokenValue($token) {
+    return hash_equals($_SESSION['csrf_token'] ?? '', $token);
+}
+
+function getCsrfToken() {
+    return generateCsrfToken();
+}
+
 // =============================================
 // PROTECCION DE FUERZA BRUTA
 // =============================================

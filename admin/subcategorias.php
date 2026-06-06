@@ -15,7 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $categoria_id = intval($_POST['categoria_id'] ?? 0);
         $nombre = sanitize($_POST['nombre'] ?? '');
         $descripcion = sanitize($_POST['descripcion'] ?? '');
-        $orden = intval($_POST['orden'] ?? 0);
+
+        // Obtener el orden maximo actual + 1 para esta categoria
+        $maxOrden = $db->prepare("SELECT COALESCE(MAX(orden), 0) + 1 FROM subcategorias WHERE categoria_id = ?");
+        $maxOrden->execute([$categoria_id]);
+        $orden = $maxOrden->fetchColumn();
 
         if (empty($nombre) || $categoria_id <= 0) {
             $mensaje = 'El nombre y la categoria son obligatorios';
@@ -37,15 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $categoria_id = intval($_POST['categoria_id'] ?? 0);
         $nombre = sanitize($_POST['nombre'] ?? '');
         $descripcion = sanitize($_POST['descripcion'] ?? '');
-        $orden = intval($_POST['orden'] ?? 0);
         $activo = isset($_POST['activo']) ? 1 : 0;
 
         if (empty($nombre) || $id <= 0 || $categoria_id <= 0) {
             $mensaje = 'Datos invalidos';
             $tipo_mensaje = 'danger';
         } else {
-            $stmt = $db->prepare("UPDATE subcategorias SET categoria_id = ?, nombre = ?, descripcion = ?, orden = ?, activo = ? WHERE id = ?");
-            if ($stmt->execute([$categoria_id, $nombre, $descripcion, $orden, $activo, $id])) {
+            $stmt = $db->prepare("UPDATE subcategorias SET categoria_id = ?, nombre = ?, descripcion = ?, activo = ? WHERE id = ?");
+            if ($stmt->execute([$categoria_id, $nombre, $descripcion, $activo, $id])) {
                 $mensaje = 'Subcategoria actualizada exitosamente';
                 $tipo_mensaje = 'success';
             } else {
@@ -91,6 +94,38 @@ $subcategorias = $db->query("
     <title>Subcategorias - <?= SITE_NAME ?></title>
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .drag-handle {
+            cursor: grab;
+            padding: 8px;
+            color: var(--slate-400);
+            transition: color 0.15s;
+        }
+        .drag-handle:hover {
+            color: var(--slate-600);
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        .sortable-ghost {
+            opacity: 0.4;
+            background: var(--primary-50) !important;
+        }
+        .sortable-chosen {
+            background: var(--slate-50);
+        }
+        .sortable-drag {
+            background: white !important;
+            box-shadow: var(--shadow-lg);
+        }
+        .order-updated {
+            animation: highlight 1s ease;
+        }
+        @keyframes highlight {
+            0%, 100% { background: transparent; }
+            50% { background: var(--success-light); }
+        }
+    </style>
 </head>
 <body>
     <div class="admin-layout">
@@ -101,7 +136,7 @@ $subcategorias = $db->query("
                 <div class="admin-header">
                     <div class="page-title-group">
                         <h1 class="page-title">Subcategorias</h1>
-                        <p class="page-subtitle">Gestiona las subcategorias del menu</p>
+                        <p class="page-subtitle">Arrastra las filas para reorganizar el orden</p>
                     </div>
                     <div class="page-actions">
                         <button class="btn btn-primary" onclick="openModal('crear')" <?= empty($categorias) ? 'disabled' : '' ?>>
@@ -135,7 +170,7 @@ $subcategorias = $db->query("
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Orden</th>
+                                    <th style="width: 50px;"></th>
                                     <th>Nombre</th>
                                     <th>Categoria</th>
                                     <th>Productos</th>
@@ -143,13 +178,17 @@ $subcategorias = $db->query("
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="sortable-subcategorias">
                                 <?php foreach ($subcategorias as $sub): ?>
-                                <tr>
-                                    <td><?= $sub['orden'] ?></td>
+                                <tr data-id="<?= $sub['id'] ?>">
+                                    <td>
+                                        <span class="drag-handle" title="Arrastra para reordenar">
+                                            <i class="fas fa-grip-vertical"></i>
+                                        </span>
+                                    </td>
                                     <td><strong><?= htmlspecialchars($sub['nombre']) ?></strong></td>
                                     <td>
-                                        <span class="badge badge-warning"><?= htmlspecialchars($sub['categoria_nombre']) ?></span>
+                                        <span class="badge badge-info"><?= htmlspecialchars($sub['categoria_nombre']) ?></span>
                                     </td>
                                     <td><?= $sub['total_productos'] ?></td>
                                     <td>
@@ -218,11 +257,6 @@ $subcategorias = $db->query("
                         <textarea id="descripcion" name="descripcion" class="form-textarea" rows="3"></textarea>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="orden">Orden</label>
-                        <input type="number" id="orden" name="orden" class="form-input" value="0" min="0">
-                    </div>
-
                     <div class="form-group" id="grupoActivo" style="display: none;">
                         <label class="form-label">
                             <input type="checkbox" name="activo" id="activo" checked>
@@ -264,7 +298,58 @@ $subcategorias = $db->query("
         </div>
     </div>
 
+    <!-- SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
+    const csrfToken = '<?= getCsrfToken() ?>';
+
+    // Inicializar Sortable
+    const sortableEl = document.getElementById('sortable-subcategorias');
+    if (sortableEl) {
+        new Sortable(sortableEl, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            onEnd: function(evt) {
+                saveOrder();
+            }
+        });
+    }
+
+    function saveOrder() {
+        const rows = document.querySelectorAll('#sortable-subcategorias tr[data-id]');
+        const items = Array.from(rows).map(row => row.dataset.id);
+
+        fetch('ajax/update_order.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify({
+                tabla: 'subcategorias',
+                items: items
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.querySelectorAll('#sortable-subcategorias tr').forEach(row => {
+                    row.classList.add('order-updated');
+                    setTimeout(() => row.classList.remove('order-updated'), 1000);
+                });
+            } else {
+                alert('Error al guardar el orden: ' + (data.error || 'Error desconocido'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al guardar el orden');
+        });
+    }
+
     function openModal(tipo, data = null) {
         const modal = document.getElementById('modalSubcategoria');
         const titulo = document.getElementById('modalTitulo');
@@ -278,7 +363,6 @@ $subcategorias = $db->query("
             document.getElementById('categoria_id').value = '';
             document.getElementById('nombre').value = '';
             document.getElementById('descripcion').value = '';
-            document.getElementById('orden').value = '0';
             grupoActivo.style.display = 'none';
         } else {
             titulo.textContent = 'Editar Subcategoria';
@@ -287,7 +371,6 @@ $subcategorias = $db->query("
             document.getElementById('categoria_id').value = data.categoria_id;
             document.getElementById('nombre').value = data.nombre;
             document.getElementById('descripcion').value = data.descripcion || '';
-            document.getElementById('orden').value = data.orden;
             document.getElementById('activo').checked = data.activo == 1;
             grupoActivo.style.display = 'block';
         }

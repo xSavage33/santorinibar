@@ -21,9 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nombre = sanitize($_POST['nombre'] ?? '');
         $descripcion = sanitize($_POST['descripcion'] ?? '');
         $precio = floatval($_POST['precio'] ?? 0);
-        $orden = intval($_POST['orden'] ?? 0);
         $destacado = isset($_POST['destacado']) ? 1 : 0;
         $imagen = null;
+
+        // Obtener el orden maximo actual + 1 para esta subcategoria
+        $maxOrden = $db->prepare("SELECT COALESCE(MAX(orden), 0) + 1 FROM productos WHERE subcategoria_id = ?");
+        $maxOrden->execute([$subcategoria_id]);
+        $orden = $maxOrden->fetchColumn();
 
         if (empty($nombre) || $subcategoria_id <= 0 || $precio <= 0) {
             $mensaje = 'El nombre, subcategoria y precio son obligatorios';
@@ -60,7 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nombre = sanitize($_POST['nombre'] ?? '');
         $descripcion = sanitize($_POST['descripcion'] ?? '');
         $precio = floatval($_POST['precio'] ?? 0);
-        $orden = intval($_POST['orden'] ?? 0);
         $activo = isset($_POST['activo']) ? 1 : 0;
         $destacado = isset($_POST['destacado']) ? 1 : 0;
 
@@ -88,8 +91,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if (empty($mensaje)) {
-                $stmt = $db->prepare("UPDATE productos SET subcategoria_id = ?, nombre = ?, descripcion = ?, precio = ?, imagen = ?, orden = ?, activo = ?, destacado = ? WHERE id = ?");
-                if ($stmt->execute([$subcategoria_id, $nombre, $descripcion, $precio, $imagen, $orden, $activo, $destacado, $id])) {
+                $stmt = $db->prepare("UPDATE productos SET subcategoria_id = ?, nombre = ?, descripcion = ?, precio = ?, imagen = ?, activo = ?, destacado = ? WHERE id = ?");
+                if ($stmt->execute([$subcategoria_id, $nombre, $descripcion, $precio, $imagen, $activo, $destacado, $id])) {
                     $mensaje = 'Producto actualizado exitosamente';
                     $tipo_mensaje = 'success';
                 } else {
@@ -148,6 +151,38 @@ $productos = $db->query("
     <title>Productos - <?= SITE_NAME ?></title>
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .drag-handle {
+            cursor: grab;
+            padding: 8px;
+            color: var(--slate-400);
+            transition: color 0.15s;
+        }
+        .drag-handle:hover {
+            color: var(--slate-600);
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        .sortable-ghost {
+            opacity: 0.4;
+            background: var(--primary-50) !important;
+        }
+        .sortable-chosen {
+            background: var(--slate-50);
+        }
+        .sortable-drag {
+            background: white !important;
+            box-shadow: var(--shadow-lg);
+        }
+        .order-updated {
+            animation: highlight 1s ease;
+        }
+        @keyframes highlight {
+            0%, 100% { background: transparent; }
+            50% { background: var(--success-light); }
+        }
+    </style>
 </head>
 <body>
     <div class="admin-layout">
@@ -158,7 +193,7 @@ $productos = $db->query("
                 <div class="admin-header">
                     <div class="page-title-group">
                         <h1 class="page-title">Productos</h1>
-                        <p class="page-subtitle">Gestiona los productos del menu</p>
+                        <p class="page-subtitle">Arrastra las filas para reorganizar el orden</p>
                     </div>
                     <div class="page-actions">
                         <button class="btn btn-primary" onclick="openModal('crear')" <?= empty($subcategorias) ? 'disabled' : '' ?>>
@@ -192,6 +227,7 @@ $productos = $db->query("
                         <table class="table">
                             <thead>
                                 <tr>
+                                    <th style="width: 50px;"></th>
                                     <th>Imagen</th>
                                     <th>Producto</th>
                                     <th>Categoria</th>
@@ -200,9 +236,14 @@ $productos = $db->query("
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="sortable-productos">
                                 <?php foreach ($productos as $prod): ?>
-                                <tr>
+                                <tr data-id="<?= $prod['id'] ?>">
+                                    <td>
+                                        <span class="drag-handle" title="Arrastra para reordenar">
+                                            <i class="fas fa-grip-vertical"></i>
+                                        </span>
+                                    </td>
                                     <td>
                                         <?php if (!empty($prod['imagen'])): ?>
                                         <img src="../<?= UPLOAD_URL . htmlspecialchars($prod['imagen']) ?>"
@@ -301,16 +342,9 @@ $productos = $db->query("
                         <textarea id="descripcion" name="descripcion" class="form-textarea" rows="3"></textarea>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div class="form-group">
-                            <label class="form-label" for="precio">Precio *</label>
-                            <input type="number" id="precio" name="precio" class="form-input" required min="0" step="100">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="orden">Orden</label>
-                            <input type="number" id="orden" name="orden" class="form-input" value="0" min="0">
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label" for="precio">Precio *</label>
+                        <input type="number" id="precio" name="precio" class="form-input" required min="0" step="100">
                     </div>
 
                     <div class="form-group">
@@ -371,7 +405,58 @@ $productos = $db->query("
         </div>
     </div>
 
+    <!-- SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
+    const csrfToken = '<?= getCsrfToken() ?>';
+
+    // Inicializar Sortable
+    const sortableEl = document.getElementById('sortable-productos');
+    if (sortableEl) {
+        new Sortable(sortableEl, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            onEnd: function(evt) {
+                saveOrder();
+            }
+        });
+    }
+
+    function saveOrder() {
+        const rows = document.querySelectorAll('#sortable-productos tr[data-id]');
+        const items = Array.from(rows).map(row => row.dataset.id);
+
+        fetch('ajax/update_order.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify({
+                tabla: 'productos',
+                items: items
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.querySelectorAll('#sortable-productos tr').forEach(row => {
+                    row.classList.add('order-updated');
+                    setTimeout(() => row.classList.remove('order-updated'), 1000);
+                });
+            } else {
+                alert('Error al guardar el orden: ' + (data.error || 'Error desconocido'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al guardar el orden');
+        });
+    }
+
     function openModal(tipo, data = null) {
         const modal = document.getElementById('modalProducto');
         const titulo = document.getElementById('modalTitulo');
@@ -391,7 +476,6 @@ $productos = $db->query("
             document.getElementById('nombre').value = '';
             document.getElementById('descripcion').value = '';
             document.getElementById('precio').value = '';
-            document.getElementById('orden').value = '0';
             document.getElementById('destacado').checked = false;
             grupoActivo.style.display = 'none';
         } else {
@@ -402,7 +486,6 @@ $productos = $db->query("
             document.getElementById('nombre').value = data.nombre;
             document.getElementById('descripcion').value = data.descripcion || '';
             document.getElementById('precio').value = data.precio;
-            document.getElementById('orden').value = data.orden;
             document.getElementById('activo').checked = data.activo == 1;
             document.getElementById('destacado').checked = data.destacado == 1;
             grupoActivo.style.display = 'block';

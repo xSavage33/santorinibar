@@ -15,14 +15,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nombre = sanitize($_POST['nombre'] ?? '');
         $descripcion = sanitize($_POST['descripcion'] ?? '');
         $tipo_menu = validateTipoMenu($_POST['tipo_menu'] ?? 'licores');
-        $orden = intval($_POST['orden'] ?? 0);
+
+        // Obtener el orden maximo actual + 1
+        $maxOrden = $db->query("SELECT COALESCE(MAX(orden), 0) + 1 FROM categorias")->fetchColumn();
 
         if (empty($nombre)) {
             $mensaje = 'El nombre es obligatorio';
             $tipo_mensaje = 'danger';
         } else {
             $stmt = $db->prepare("INSERT INTO categorias (nombre, descripcion, tipo_menu, orden) VALUES (?, ?, ?, ?)");
-            if ($stmt->execute([$nombre, $descripcion, $tipo_menu, $orden])) {
+            if ($stmt->execute([$nombre, $descripcion, $tipo_menu, $maxOrden])) {
                 $mensaje = 'Categoria creada exitosamente';
                 $tipo_mensaje = 'success';
             } else {
@@ -37,15 +39,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nombre = sanitize($_POST['nombre'] ?? '');
         $descripcion = sanitize($_POST['descripcion'] ?? '');
         $tipo_menu = validateTipoMenu($_POST['tipo_menu'] ?? 'licores');
-        $orden = intval($_POST['orden'] ?? 0);
         $activo = isset($_POST['activo']) ? 1 : 0;
 
         if (empty($nombre) || $id <= 0) {
             $mensaje = 'Datos invalidos';
             $tipo_mensaje = 'danger';
         } else {
-            $stmt = $db->prepare("UPDATE categorias SET nombre = ?, descripcion = ?, tipo_menu = ?, orden = ?, activo = ? WHERE id = ?");
-            if ($stmt->execute([$nombre, $descripcion, $tipo_menu, $orden, $activo, $id])) {
+            $stmt = $db->prepare("UPDATE categorias SET nombre = ?, descripcion = ?, tipo_menu = ?, activo = ? WHERE id = ?");
+            if ($stmt->execute([$nombre, $descripcion, $tipo_menu, $activo, $id])) {
                 $mensaje = 'Categoria actualizada exitosamente';
                 $tipo_mensaje = 'success';
             } else {
@@ -85,6 +86,38 @@ $categorias = $db->query("SELECT c.*,
     <title>Categorias - <?= SITE_NAME ?></title>
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .drag-handle {
+            cursor: grab;
+            padding: 8px;
+            color: var(--slate-400);
+            transition: color 0.15s;
+        }
+        .drag-handle:hover {
+            color: var(--slate-600);
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        .sortable-ghost {
+            opacity: 0.4;
+            background: var(--primary-50) !important;
+        }
+        .sortable-chosen {
+            background: var(--slate-50);
+        }
+        .sortable-drag {
+            background: white !important;
+            box-shadow: var(--shadow-lg);
+        }
+        .order-updated {
+            animation: highlight 1s ease;
+        }
+        @keyframes highlight {
+            0%, 100% { background: transparent; }
+            50% { background: var(--success-light); }
+        }
+    </style>
 </head>
 <body>
     <div class="admin-layout">
@@ -95,7 +128,7 @@ $categorias = $db->query("SELECT c.*,
                 <div class="admin-header">
                     <div class="page-title-group">
                         <h1 class="page-title">Categorias</h1>
-                        <p class="page-subtitle">Gestiona las categorias del menu</p>
+                        <p class="page-subtitle">Arrastra las filas para reorganizar el orden</p>
                     </div>
                     <div class="page-actions">
                         <button class="btn btn-primary" onclick="openModal('crear')">
@@ -121,7 +154,7 @@ $categorias = $db->query("SELECT c.*,
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Orden</th>
+                                    <th style="width: 50px;"></th>
                                     <th>Nombre</th>
                                     <th>Menu</th>
                                     <th>Descripcion</th>
@@ -131,16 +164,20 @@ $categorias = $db->query("SELECT c.*,
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="sortable-categorias">
                                 <?php foreach ($categorias as $cat): ?>
-                                <tr>
-                                    <td><?= $cat['orden'] ?></td>
+                                <tr data-id="<?= $cat['id'] ?>">
+                                    <td>
+                                        <span class="drag-handle" title="Arrastra para reordenar">
+                                            <i class="fas fa-grip-vertical"></i>
+                                        </span>
+                                    </td>
                                     <td><strong><?= htmlspecialchars($cat['nombre']) ?></strong></td>
                                     <td>
                                         <?php if (($cat['tipo_menu'] ?? 'licores') === 'licores'): ?>
-                                        <span class="badge badge-gold"><i class="fas fa-wine-glass-alt"></i> Licores</span>
+                                        <span class="badge badge-warning"><i class="fas fa-wine-glass-alt"></i> Licores</span>
                                         <?php else: ?>
-                                        <span class="badge badge-green"><i class="fas fa-utensils"></i> Comidas</span>
+                                        <span class="badge badge-success"><i class="fas fa-utensils"></i> Comidas</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-muted"><?= htmlspecialchars($cat['descripcion'] ?: '-') ?></td>
@@ -204,15 +241,10 @@ $categorias = $db->query("SELECT c.*,
 
                     <div class="form-group">
                         <label class="form-label" for="tipo_menu">Mostrar en</label>
-                        <select id="tipo_menu" name="tipo_menu" class="form-input">
+                        <select id="tipo_menu" name="tipo_menu" class="form-select">
                             <option value="licores">Menu de Licores</option>
                             <option value="comidas">Menu de Comidas</option>
                         </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="orden">Orden</label>
-                        <input type="number" id="orden" name="orden" class="form-input" value="0" min="0">
                     </div>
 
                     <div class="form-group" id="grupoActivo" style="display: none;">
@@ -256,7 +288,59 @@ $categorias = $db->query("SELECT c.*,
         </div>
     </div>
 
+    <!-- SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
+    const csrfToken = '<?= getCsrfToken() ?>';
+
+    // Inicializar Sortable
+    const sortableEl = document.getElementById('sortable-categorias');
+    if (sortableEl) {
+        new Sortable(sortableEl, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            onEnd: function(evt) {
+                saveOrder();
+            }
+        });
+    }
+
+    function saveOrder() {
+        const rows = document.querySelectorAll('#sortable-categorias tr[data-id]');
+        const items = Array.from(rows).map(row => row.dataset.id);
+
+        fetch('ajax/update_order.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify({
+                tabla: 'categorias',
+                items: items
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Feedback visual
+                document.querySelectorAll('#sortable-categorias tr').forEach(row => {
+                    row.classList.add('order-updated');
+                    setTimeout(() => row.classList.remove('order-updated'), 1000);
+                });
+            } else {
+                alert('Error al guardar el orden: ' + (data.error || 'Error desconocido'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al guardar el orden');
+        });
+    }
+
     function openModal(tipo, data = null) {
         const modal = document.getElementById('modalCategoria');
         const titulo = document.getElementById('modalTitulo');
@@ -270,7 +354,6 @@ $categorias = $db->query("SELECT c.*,
             document.getElementById('nombre').value = '';
             document.getElementById('descripcion').value = '';
             document.getElementById('tipo_menu').value = 'licores';
-            document.getElementById('orden').value = '0';
             grupoActivo.style.display = 'none';
         } else {
             titulo.textContent = 'Editar Categoria';
@@ -279,7 +362,6 @@ $categorias = $db->query("SELECT c.*,
             document.getElementById('nombre').value = data.nombre;
             document.getElementById('descripcion').value = data.descripcion || '';
             document.getElementById('tipo_menu').value = data.tipo_menu || 'licores';
-            document.getElementById('orden').value = data.orden;
             document.getElementById('activo').checked = data.activo == 1;
             grupoActivo.style.display = 'block';
         }
