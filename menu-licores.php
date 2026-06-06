@@ -142,7 +142,13 @@ foreach ($productos as $producto) {
                         <div class="product-info">
                             <h4 class="product-name"><?= htmlspecialchars($producto['nombre']) ?></h4>
                             <?php if (!empty($producto['descripcion'])): ?>
-                            <p class="product-description"><?= htmlspecialchars($producto['descripcion']) ?></p>
+                            <?php $descLarga = strlen($producto['descripcion']) > 80; ?>
+                            <div class="product-description-wrapper <?= $descLarga ? 'truncated' : '' ?>">
+                                <p class="product-description"><?= htmlspecialchars($producto['descripcion']) ?></p>
+                                <?php if ($descLarga): ?>
+                                <button class="ver-mas-btn" onclick="toggleDescripcion(this)">Ver más...</button>
+                                <?php endif; ?>
+                            </div>
                             <?php endif; ?>
                             <div class="product-price">
                                 <span class="price-value"><?= formatPrice($producto['precio']) ?></span>

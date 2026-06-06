@@ -135,3 +135,43 @@ if (isTouchDevice()) {
     document.body.classList.add('touch-device');
 }
 
+// =============================================
+// VER MAS DESCRIPCION
+// =============================================
+
+function toggleDescripcion(btn) {
+    const wrapper = btn.closest('.product-description-wrapper');
+
+    if (wrapper.classList.contains('expanded')) {
+        // Colapsar
+        wrapper.classList.remove('expanded');
+        wrapper.classList.add('truncated');
+        btn.textContent = 'Ver más...';
+    } else {
+        // Cerrar cualquier otra descripcion expandida
+        document.querySelectorAll('.product-description-wrapper.expanded').forEach(w => {
+            w.classList.remove('expanded');
+            w.classList.add('truncated');
+            const otherBtn = w.querySelector('.ver-mas-btn');
+            if (otherBtn) otherBtn.textContent = 'Ver más...';
+        });
+
+        // Expandir esta
+        wrapper.classList.remove('truncated');
+        wrapper.classList.add('expanded');
+        btn.textContent = 'Ver menos';
+    }
+}
+
+// Cerrar al hacer clic fuera
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.product-description-wrapper')) {
+        document.querySelectorAll('.product-description-wrapper.expanded').forEach(wrapper => {
+            wrapper.classList.remove('expanded');
+            wrapper.classList.add('truncated');
+            const btn = wrapper.querySelector('.ver-mas-btn');
+            if (btn) btn.textContent = 'Ver más...';
+        });
+    }
+});
+
