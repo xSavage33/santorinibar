@@ -20,7 +20,7 @@ CREATE TABLE `administradores` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 INSERT INTO `administradores` (`id`, `usuario`, `password`, `nombre`, `created_at`) VALUES
-(1, 'admin', 'santorini@777', 'Administrador', '2026-01-31 20:35:23');
+(1, 'admin@santorini.co', 'admin@santorini', 'Administrador', '2026-01-31 20:35:23');
 
 -- Tabla categorias
 DROP TABLE IF EXISTS `categorias`;
