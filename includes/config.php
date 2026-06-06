@@ -48,8 +48,52 @@ define('SITE_NAME', 'Santorini Restobar');
 define('UPLOAD_PATH', __DIR__ . '/../uploads/productos/');
 define('UPLOAD_URL', 'uploads/productos/');
 
-// Imagen placeholder para productos sin foto (SVG en base64)
-define('NO_IMAGE_PLACEHOLDER', 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmdHcmFkIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzFhMWEyZTtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMTYyMTNlO3N0b3Atb3BhY2l0eToxIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iaWNvbkdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZDRhZjM3O3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNiODk2MGM7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0idXJsKCNiZ0dyYWQpIi8+CiAgPHJlY3QgeD0iOCIgeT0iOCIgd2lkdGg9IjE4NCIgaGVpZ2h0PSIxODQiIHJ4PSI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNkNGFmMzciIHN0cm9rZS13aWR0aD0iMSIgb3BhY2l0eT0iMC4zIi8+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTAwLDEwMCkiIGZpbGw9InVybCgjaWNvbkdyYWQpIj4KICAgIDxwYXRoIGQ9Ik0tMTIgNDUgTC0xMiAxMCBRLTEyIC01IC04IC0xNSBMLTggLTM1IFEtOCAtNDAgLTYgLTQwIEw2IC00MCBROCAtNDAgOCAtMzUgTDggLTE1IFExMiAtNSAxMiAxMCBMMTIgNDUgUTEyIDUwIDggNTAgTC04IDUwIFEtMTIgNTAgLTEyIDQ1IFoiIG9wYWNpdHk9IjAuOSIvPgogICAgPHJlY3QgeD0iLTYiIHk9Ii00MiIgd2lkdGg9IjEyIiBoZWlnaHQ9IjQiIHJ4PSIxIiBvcGFjaXR5PSIwLjciLz4KICAgIDxyZWN0IHg9Ii04IiB5PSI1IiB3aWR0aD0iMTYiIGhlaWdodD0iMjAiIHJ4PSIyIiBmaWxsPSIjMWExYTJlIiBvcGFjaXR5PSIwLjUiLz4KICA8L2c+CiAgPHBhdGggZD0iTTE1IDE1IEwzNSAxNSBNMTUgMTUgTDE1IDM1IiBzdHJva2U9IiNkNGFmMzciIHN0cm9rZS13aWR0aD0iMS41IiBvcGFjaXR5PSIwLjUiLz4KICA8cGF0aCBkPSJNMTg1IDE1IEwxNjUgMTUgTTE4NSAxNSBMMTg1IDM1IiBzdHJva2U9IiNkNGFmMzciIHN0cm9rZS13aWR0aD0iMS41IiBvcGFjaXR5PSIwLjUiLz4KICA8cGF0aCBkPSJNMTUgMTg1IEwzNSAxODUgTTE1IDE4NSBMMTU1IDE2NSIgc3Ryb2tlPSIjZDRhZjM3IiBzdHJva2Utd2lkdGg9IjEuNSIgb3BhY2l0eT0iMC41Ii8+CiAgPHBhdGggZD0iTTE4NSAxODUgTDE2NSAxODUgTTE4NSAxODUgTDE4NSAxNjUiIHN0cm9rZT0iI2Q0YWYzNyIgc3Ryb2tlLXdpZHRoPSIxLjUiIG9wYWNpdHk9IjAuNSIvPgogIDx0ZXh0IHg9IjEwMCIgeT0iMTc1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZDRhZjM3IiBmb250LWZhbWlseT0iR2VvcmdpYSwgc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIG9wYWNpdHk9IjAuNiI+U2luIGltYWdlbjwvdGV4dD4KPC9zdmc+');
+// Placeholder para licores (copa de vino elegante)
+define('PLACEHOLDER_LICORES', 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f4d03f"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#b8960c"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#bg)"/>
+  <g transform="translate(100,100)" stroke="url(#gold)" fill="none" stroke-width="2" stroke-linecap="round">
+    <ellipse cx="0" cy="-35" rx="28" ry="20" opacity="0.9"/>
+    <path d="M0 -15 L0 30" opacity="0.9"/>
+    <ellipse cx="0" cy="35" rx="18" ry="6" opacity="0.9"/>
+    <path d="M-20 -45 Q-10 -60 0 -55 Q10 -60 20 -45" opacity="0.5"/>
+  </g>
+</svg>'));
+
+// Placeholder para comidas (plato con cubiertos)
+define('PLACEHOLDER_COMIDAS', 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    <linearGradient id="gold2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f4d03f"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#b8960c"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#bg2)"/>
+  <g transform="translate(100,100)" stroke="url(#gold2)" fill="none" stroke-width="2" stroke-linecap="round">
+    <circle cx="0" cy="0" r="35" opacity="0.9"/>
+    <circle cx="0" cy="0" r="25" opacity="0.5"/>
+    <path d="M-55 -30 L-55 35 M-55 -30 Q-55 -40 -50 -40 Q-45 -40 -45 -30 L-45 -5 M-55 -5 L-45 -5" opacity="0.8"/>
+    <path d="M55 -40 L55 35 M50 -40 L50 -20 L55 -15 L60 -20 L60 -40" opacity="0.8"/>
+  </g>
+</svg>'));
+
+// Placeholder por defecto (usa licores)
+define('NO_IMAGE_PLACEHOLDER', PLACEHOLDER_LICORES);
 
 // Configuracion de sesion segura ANTES de iniciarla
 if (session_status() === PHP_SESSION_NONE) {
