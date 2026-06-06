@@ -196,6 +196,10 @@ $productos = $db->query("
                         <p class="page-subtitle">Arrastra las filas para reorganizar el orden</p>
                     </div>
                     <div class="page-actions">
+                        <div class="search-input-wrapper">
+                            <i class="fas fa-search search-input-icon"></i>
+                            <input type="text" id="searchInput" class="search-input" placeholder="Buscar producto..." onkeyup="filterTable()">
+                        </div>
                         <button class="btn btn-primary" onclick="openModal('crear')" <?= empty($subcategorias) ? 'disabled' : '' ?>>
                             <i class="fas fa-plus"></i>
                             Nuevo Producto
@@ -249,7 +253,7 @@ $productos = $db->query("
                                         <img src="../<?= UPLOAD_URL . htmlspecialchars($prod['imagen']) ?>"
                                              alt="" class="table-image">
                                         <?php else: ?>
-                                        <img src="../assets/img/no-image.svg" alt="Sin imagen" class="table-image">
+                                        <img src="<?= NO_IMAGE_PLACEHOLDER ?>" alt="Sin imagen" class="table-image">
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -532,6 +536,36 @@ $productos = $db->query("
             }
         });
     });
+
+    // Filtrar tabla de productos
+    function filterTable() {
+        const searchValue = document.getElementById('searchInput').value.toLowerCase();
+        const rows = document.querySelectorAll('#sortable-productos tr[data-id]');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(searchValue)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Mostrar mensaje si no hay resultados
+        let noResults = document.getElementById('noResults');
+        if (visibleCount === 0 && searchValue !== '') {
+            if (!noResults) {
+                noResults = document.createElement('tr');
+                noResults.id = 'noResults';
+                noResults.innerHTML = '<td colspan="7" class="text-center text-muted" style="padding: 30px;">No se encontraron productos con "' + searchValue + '"</td>';
+                document.getElementById('sortable-productos').appendChild(noResults);
+            }
+        } else if (noResults) {
+            noResults.remove();
+        }
+    }
     </script>
 </body>
 </html>

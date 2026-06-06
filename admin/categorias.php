@@ -131,6 +131,10 @@ $categorias = $db->query("SELECT c.*,
                         <p class="page-subtitle">Arrastra las filas para reorganizar el orden</p>
                     </div>
                     <div class="page-actions">
+                        <div class="search-input-wrapper">
+                            <i class="fas fa-search search-input-icon"></i>
+                            <input type="text" id="searchInput" class="search-input" placeholder="Buscar categoria..." onkeyup="filterTable()">
+                        </div>
                         <button class="btn btn-primary" onclick="openModal('crear')">
                             <i class="fas fa-plus"></i>
                             Nueva Categoria
@@ -392,6 +396,35 @@ $categorias = $db->query("SELECT c.*,
             }
         });
     });
+
+    // Filtrar tabla
+    function filterTable() {
+        const searchValue = document.getElementById('searchInput').value.toLowerCase();
+        const rows = document.querySelectorAll('#sortable-categorias tr[data-id]');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(searchValue)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        let noResults = document.getElementById('noResults');
+        if (visibleCount === 0 && searchValue !== '') {
+            if (!noResults) {
+                noResults = document.createElement('tr');
+                noResults.id = 'noResults';
+                noResults.innerHTML = '<td colspan="8" class="text-center text-muted" style="padding: 30px;">No se encontraron categorias</td>';
+                document.getElementById('sortable-categorias').appendChild(noResults);
+            }
+        } else if (noResults) {
+            noResults.remove();
+        }
+    }
     </script>
 </body>
 </html>

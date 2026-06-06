@@ -154,7 +154,7 @@ foreach ($productos as $producto) {
                                  alt="<?= htmlspecialchars($producto['nombre']) ?>"
                                  loading="lazy">
                             <?php else: ?>
-                            <img src="assets/img/no-image.svg" alt="<?= htmlspecialchars($producto['nombre']) ?>" loading="lazy">
+                            <img src="<?= NO_IMAGE_PLACEHOLDER ?>" alt="<?= htmlspecialchars($producto['nombre']) ?>" loading="lazy">
                             <?php endif; ?>
                             <div class="image-overlay"></div>
                         </div>

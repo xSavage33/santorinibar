@@ -110,7 +110,7 @@ $ultimosProductos = $db->query("
                                         <img src="../<?= UPLOAD_URL . htmlspecialchars($prod['imagen']) ?>" 
                                              alt="" class="table-image">
                                         <?php else: ?>
-                                        <img src="../assets/img/no-image.svg" alt="Sin imagen" class="table-image">
+                                        <img src="<?= NO_IMAGE_PLACEHOLDER ?>" alt="Sin imagen" class="table-image">
                                         <?php endif; ?>
                                     </td>
                                     <td>
