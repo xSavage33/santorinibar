@@ -312,8 +312,7 @@ $productos = $db->query("
                 <h3 class="modal-title" id="modalTitulo">Nuevo Producto</h3>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
-            <form method="POST" action="" enctype="multipart/form-data">
-                <?= getCsrfInput() ?>
+            <form id="formProducto" enctype="multipart/form-data">
                 <div class="modal-body">
                     <input type="hidden" name="accion" id="formAccion" value="crear">
                     <input type="hidden" name="id" id="formId" value="">
@@ -395,8 +394,7 @@ $productos = $db->query("
                 <h3 class="modal-title">Confirmar Eliminacion</h3>
                 <button class="modal-close" onclick="closeModalEliminar()">&times;</button>
             </div>
-            <form method="POST" action="">
-                <?= getCsrfInput() ?>
+            <form id="formEliminar">
                 <div class="modal-body">
                     <input type="hidden" name="accion" value="eliminar">
                     <input type="hidden" name="id" id="eliminarId" value="">
@@ -414,6 +412,8 @@ $productos = $db->query("
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
     const csrfToken = '<?= getCsrfToken() ?>';
+    const uploadUrl = '../<?= UPLOAD_URL ?>';
+    const noImagePlaceholder = '<?= NO_IMAGE_PLACEHOLDER ?>';
 
     // Inicializar Sortable
     const sortableEl = document.getElementById('sortable-productos');
@@ -454,12 +454,12 @@ $productos = $db->query("
                     setTimeout(() => row.classList.remove('order-updated'), 1000);
                 });
             } else {
-                alert('Error al guardar el orden: ' + (data.error || 'Error desconocido'));
+                showAlert('Error al guardar el orden: ' + (data.error || 'Error desconocido'), 'danger');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error al guardar el orden');
+            showAlert('Error al guardar el orden', 'danger');
         });
     }
 
@@ -498,7 +498,7 @@ $productos = $db->query("
 
             // Mostrar imagen actual
             if (data.imagen) {
-                preview.innerHTML = '<img src="../<?= UPLOAD_URL ?>' + data.imagen + '" alt="Imagen actual">';
+                preview.innerHTML = '<img src="' + uploadUrl + data.imagen + '" alt="Imagen actual">';
             }
         }
 
@@ -540,6 +540,212 @@ $productos = $db->query("
         });
     });
 
+    // Mostrar alertas
+    function showAlert(message, type) {
+        // Remover alertas anteriores
+        const oldAlerts = document.querySelectorAll('.alert-dynamic');
+        oldAlerts.forEach(a => a.remove());
+
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dynamic`;
+        alertDiv.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            ${message}
+        `;
+
+        const adminContent = document.querySelector('.admin-content');
+        const header = adminContent.querySelector('.admin-header');
+        header.insertAdjacentElement('afterend', alertDiv);
+
+        // Auto-remover despues de 5 segundos
+        setTimeout(() => alertDiv.remove(), 5000);
+    }
+
+    // Formatear precio
+    function formatPrice(price) {
+        return '$' + new Intl.NumberFormat('es-CL').format(price);
+    }
+
+    // Crear fila de producto
+    function createProductRow(prod) {
+        const tr = document.createElement('tr');
+        tr.dataset.id = prod.id;
+        tr.innerHTML = `
+            <td>
+                <span class="drag-handle" title="Arrastra para reordenar">
+                    <i class="fas fa-grip-vertical"></i>
+                </span>
+            </td>
+            <td>
+                <img src="${prod.imagen ? uploadUrl + prod.imagen : noImagePlaceholder}"
+                     alt="" class="table-image"
+                     onerror="this.onerror=null; this.src='${noImagePlaceholder}'">
+            </td>
+            <td>
+                <strong>${escapeHtml(prod.nombre)}</strong>
+                ${prod.destacado == 1 ? '<span class="badge badge-warning" style="margin-left: 5px;">Destacado</span>' : ''}
+                <br>
+                <small class="text-muted">${escapeHtml((prod.descripcion || '').substring(0, 50))}...</small>
+            </td>
+            <td>
+                ${escapeHtml(prod.categoria_nombre)}<br>
+                <small class="text-primary">${escapeHtml(prod.subcategoria_nombre)}</small>
+            </td>
+            <td class="text-success font-semibold">${formatPrice(prod.precio)}</td>
+            <td>
+                ${prod.activo == 1
+                    ? '<span class="badge badge-success">Activo</span>'
+                    : '<span class="badge badge-danger">Inactivo</span>'}
+            </td>
+            <td>
+                <div class="table-actions">
+                    <button class="btn btn-sm btn-secondary btn-icon"
+                            onclick="openModal('editar', ${escapeHtml(JSON.stringify(prod))})"
+                            title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger btn-icon"
+                            onclick="confirmarEliminar(${prod.id}, '${escapeHtml(prod.nombre.replace(/'/g, "\\'"))}')"
+                            title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        return tr;
+    }
+
+    // Escape HTML para prevenir XSS
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Manejar formulario de crear/editar
+    document.getElementById('formProducto').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        formData.append('csrf_token', csrfToken);
+
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Guardando...';
+
+        fetch('ajax/productos.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const accion = document.getElementById('formAccion').value;
+                const tbody = document.getElementById('sortable-productos');
+
+                if (accion === 'crear') {
+                    // Agregar nueva fila
+                    const newRow = createProductRow(data.producto);
+                    tbody.appendChild(newRow);
+                    newRow.classList.add('order-updated');
+                    setTimeout(() => newRow.classList.remove('order-updated'), 1000);
+
+                    // Remover mensaje de "no hay productos" si existe
+                    const emptyMsg = document.querySelector('.text-center.text-muted');
+                    if (emptyMsg && emptyMsg.textContent.includes('No hay productos')) {
+                        emptyMsg.closest('.card-body').innerHTML = `
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;"></th>
+                                            <th>Imagen</th>
+                                            <th>Producto</th>
+                                            <th>Categoria</th>
+                                            <th>Precio</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sortable-productos"></tbody>
+                                </table>
+                            </div>
+                        `;
+                        document.getElementById('sortable-productos').appendChild(newRow);
+                    }
+                } else {
+                    // Actualizar fila existente
+                    const existingRow = tbody.querySelector(`tr[data-id="${data.producto.id}"]`);
+                    if (existingRow) {
+                        const newRow = createProductRow(data.producto);
+                        existingRow.replaceWith(newRow);
+                        newRow.classList.add('order-updated');
+                        setTimeout(() => newRow.classList.remove('order-updated'), 1000);
+                    }
+                }
+
+                closeModal();
+                showAlert(data.message, 'success');
+            } else {
+                showAlert(data.error || 'Error al guardar', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Error de conexion', 'danger');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    });
+
+    // Manejar formulario de eliminar
+    document.getElementById('formEliminar').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        formData.append('csrf_token', csrfToken);
+
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Eliminando...';
+
+        fetch('ajax/productos.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remover fila de la tabla
+                const row = document.querySelector(`#sortable-productos tr[data-id="${data.id}"]`);
+                if (row) {
+                    row.style.transition = 'opacity 0.3s, transform 0.3s';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(-20px)';
+                    setTimeout(() => row.remove(), 300);
+                }
+
+                closeModalEliminar();
+                showAlert(data.message, 'success');
+            } else {
+                showAlert(data.error || 'Error al eliminar', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Error de conexion', 'danger');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    });
+
     // Filtrar tabla de productos
     function filterTable() {
         const searchValue = document.getElementById('searchInput').value.toLowerCase();
@@ -549,7 +755,7 @@ $productos = $db->query("
 
         rows.forEach(row => {
             const text = row.textContent.toLowerCase();
-            const categoryCell = row.querySelector('td:nth-child(5)'); // Columna de categoría
+            const categoryCell = row.querySelector('td:nth-child(4)'); // Columna de categoría
             const categoryText = categoryCell ? categoryCell.textContent.toLowerCase() : '';
 
             const matchesSearch = searchValue === '' || text.includes(searchValue);
